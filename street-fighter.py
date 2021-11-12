@@ -63,20 +63,19 @@ class Fighter:
         self.y = y  # Position of fighter respect to y axis
         self.special_power = ['Guile', 'Ryu']
         self.speed = 10
-        self.flip = False
         self.jump = False
+        self.in_air = False
+        self.flip = False
+        self.update_time = pygame.time.get_ticks()
+        self.vel_y = 0
 
     def update_action(self, new_action):
         """Check if the new action is different to the previous one"""
         if new_action != self.action:
             self.action = new_action
 
-    def image_update(self):
-        """Update character image according to char action"""
-        img = pygame.image.load(f'char_img/{self.name}/{self.action}.gif')
-        self.image = pygame.transform.scale(img, (img.get_width() * self.scale, img.get_height() * self.scale))
-
     def move(self, move_left, move_right, jump):  # method for moving left and right
+        """Method for character movement left, right, jump"""
         if move_left and self.x >= 0:  # check move and set boundary so the image won't move outside the screen
             self.x -= self.speed
             self.flip = True
@@ -84,8 +83,32 @@ class Fighter:
             self.x += self.speed
             self.flip = False
 
+        # jump
+        jump_step = 0
+        GRAVITY = 0.3
+        if self.jump and self.in_air == False:
+            self.action = 'jump'
+            self.image_update()
+            self.vel_y = -11
+            self.jump = False
+            self.in_air = True
 
-        jump_step = 20
+        # apply gravity
+        self.vel_y += GRAVITY
+        if self.vel_y > 20:
+            self.vel_y = 20
+        jump_step += self.vel_y
+
+        # check collision with floor
+        if self.y + jump_step > 250:
+            self.action = 'idle'
+            self.image_update()
+            jump_step = 250 - self.y
+            self.in_air = False
+
+        # update rectangle position
+        self.y += jump_step
+        """jump_step = 20
         if self.jump and self.y >= 50:  # jump up
             self.action = 'jump'
             self.image_update()
@@ -98,19 +121,32 @@ class Fighter:
                 #self.y += jump_step
                 #self.action = 'idle'
                 #self.image_update()
-            #self.jump = False
+            #self.jump = False"""
 
     def attack(self):
         if self.action == 'punch':
+            self.action = 'punch'
             self.image_update()
         elif self.action == 'kick':
+            self.action = 'kick'
             self.image_update()
         elif self.action == 'special_power':
+            self.action = 'special_power'
             self.image_update()
+        if pygame.time.get_ticks() - self.update_time > 700:
+            self.update_time = pygame.time.get_ticks()
+            self.action = 'idle'
+            first_fighter.image_update()
 
     def draw(self):  # draw the character
         """Draw the fighter"""
         screen.blit(pygame.transform.flip(self.image, self.flip, False), (self.x, self.y))
+
+    def image_update(self):
+        """Update character image according to char action"""
+        img = pygame.image.load(f'char_img/{self.name}/{self.action}.gif')
+        self.image = pygame.transform.scale(img, (img.get_width() * self.scale, img.get_height() * self.scale))
+        first_fighter.draw()
 
 
 background_img = Background()
@@ -119,7 +155,6 @@ second_fighter = Fighter(950, 250, 'Ryu', 30, 0.7)
 move_left = False
 move_right = False
 run = True
-
 
 while run:  # the run loop
     clock.tick(fps)  # set up the same speed of display for any animation in the game
@@ -132,7 +167,6 @@ while run:  # the run loop
     first_fighter.draw()
     # first_fighter.test()
     second_fighter.draw()
-    first_fighter.image_update()
 
     for event in pygame.event.get():
         """Exit game input"""
@@ -149,9 +183,9 @@ while run:  # the run loop
                 first_fighter.jump = True
             elif event.key == pygame.K_p:  # punch
                 first_fighter.action = 'punch'
-            elif event.key == pygame.K_k:  # punch
+            elif event.key == pygame.K_k:  # kick
                 first_fighter.action = 'kick'
-            elif event.key == pygame.K_s:  # punch
+            elif event.key == pygame.K_s:  # special power
                 first_fighter.action = 'special_power'
 
         if event.type == pygame.KEYUP:  # check for key releases
@@ -163,10 +197,6 @@ while run:  # the run loop
     if first_fighter.alive:
         first_fighter.move(move_left, move_right, first_fighter.jump)
         first_fighter.attack()
-        #if first_fighter.action != 'idle':
-            #first_fighter.update_action('idle')
-            #first_fighter.image_update()
-
 
     pygame.display.update()  # to update all added images
 pygame.quit()
