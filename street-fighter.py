@@ -1,5 +1,5 @@
 import pygame
-from pygame.constants import K_SPACE
+from pygame import mixer
 
 pygame.init()  # call all the features in pygame package
 
@@ -15,9 +15,18 @@ pygame.display.set_caption('Street Fighter')  # setting the title for the game w
 icon = pygame.image.load('icon.png')
 pygame.display.set_icon(icon)
 
+# background music
+mixer.music.load('sounds/background music.mp3')
+mixer.music.play(-1)
+jump_sound = mixer.Sound('sounds/jump.mp3')
+punch_sound = mixer.Sound('sounds/attack/punch.mp3')
+kick_sound = mixer.Sound('sounds/attack/kick.mp3')
+power1_sound = mixer.Sound('sounds/attack/power 1.mp3')
+power2_sound = mixer.Sound('sounds/attack/power 2.mp3')
 
 # load images
 # background image
+
 class Background:
     def __init__(self):
         """Set components to manage multiple frames of the background"""
@@ -50,10 +59,10 @@ class Background:
 
 # fighter class
 class Fighter:
-    def __init__(self, x, y, name, max_hp, img_scale):
+    def __init__(self, x, y, name, img_scale, special_sound):
         self.name = name
-        self.max_hp = max_hp
-        self.hp = max_hp
+        self.max_hp = 500
+        self.hp = 500
         self.alive = True
         self.action = 'idle'
         self.scale = img_scale  # scale to adjust the size of the character image
@@ -69,6 +78,7 @@ class Fighter:
         self.flip = False
         self.update_time = pygame.time.get_ticks()
         self.vel_y = 0
+        self.special_sound = special_sound
 
     def move(self, move_left, move_right):  # method for moving left and right
         """Method for character movement left, right"""
@@ -86,6 +96,7 @@ class Fighter:
         if first_fighter.jump and self.in_air == False:
             self.action = 'jump'
             self.draw()
+            jump_sound.play()
             self.vel_y = -11
             self.jump = False
             self.in_air = True
@@ -111,21 +122,24 @@ class Fighter:
 
     def attack(self):
         if self.action == 'punch':
+            punch_sound.play()
             self.draw()
         if self.action == 'kick':
+            kick_sound.play()
             self.draw()
         if self.action == 'special_power':
+            self.special_sound.play()
             self.draw()
         if pygame.time.get_ticks() - self.update_time > 600:
             self.update_time = pygame.time.get_ticks()
             self.action = 'idle'
             self.draw()
-
+            
 
 # game variables
 background_img = Background()
-first_fighter = Fighter(250, 250, 'Guile', 30, 0.8)
-second_fighter = Fighter(950, 250, 'Ryu', 30, 0.7)
+first_fighter = Fighter(250, 250, 'Guile', 0.8, power1_sound)
+second_fighter = Fighter(950, 250, 'Ryu', 0.7, power2_sound)
 move_left = False
 move_right = False
 run = True
