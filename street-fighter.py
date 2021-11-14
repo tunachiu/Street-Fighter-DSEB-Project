@@ -71,7 +71,6 @@ class Fighter:
         self.frame_index = 0
         self.x = x  # Position of fighter respect to x axis
         self.y = y  # Position of fighter respect to y axis
-        self.special_power = ['Guile', 'Ryu']
         self.speed = 10
         self.jump = False
         self.in_air = False
@@ -130,19 +129,48 @@ class Fighter:
         if self.action == 'special_power':
             self.special_sound.play()
             self.draw()
+            if self.name == first_fighter.name:
+                self.special_power = GuilePowers
+                for power in self.special_power: 
+                    power.shoot()
+            elif self.name == second_fighter.name:
+                self.special_power = RyuPowers
+                for power in self.special_power: 
+                    power.shoot()
         if pygame.time.get_ticks() - self.update_time > 600:
             self.update_time = pygame.time.get_ticks()
             self.action = 'idle'
             self.draw()
-            
+
+class PowerShoot():
+        def __init__(self, fighterX, fighterY, img, x_vel):
+            image = pygame.image.load(img)
+            self.image = pygame.transform.scale(image, (image.get_width() / 2, image.get_height() / 2))
+            self.x = fighterX
+            self.y = fighterY 
+            self.x_vel = x_vel
+            self.state = 'ready'
+
+        def shoot(self):
+            self.state = 'shoot'
+            self.x += self.x_vel
+            screen.blit(self.image, (self.x, self.y))
+
 
 # game variables
+
 background_img = Background()
 first_fighter = Fighter(250, 250, 'Guile', 0.8, power1_sound)
 second_fighter = Fighter(950, 250, 'Ryu', 0.7, power2_sound)
 move_left = False
 move_right = False
 run = True
+RyuPowers = [PowerShoot( second_fighter.x, second_fighter.y, 'char_img/Ryu/power.png', 5),
+            PowerShoot(second_fighter.x, second_fighter.y, 'char_img/Ryu/power.png', 10)]
+GuilePowers = [PowerShoot(first_fighter.x, first_fighter.y, 'char_img/Guile/power1.png', 1),
+            PowerShoot(first_fighter.x, first_fighter.y, 'char_img/Guile/power2.png', 5),
+            PowerShoot(first_fighter.x, first_fighter.y, 'char_img/Guile/power1.png', 10)]
+
 
 while run:  # the run loop
     punch = False
