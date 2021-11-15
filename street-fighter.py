@@ -9,6 +9,11 @@ fps = 60
 # game window
 screen_width = 1200
 screen_height = 450
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+BROWN = (210,105,30)
+GREEN = (154,205,50)
+YELLOW = (255,215,0)
 
 screen = pygame.display.set_mode((screen_width, screen_height))  # set the size the the game window
 pygame.display.set_caption('Street Fighter')  # setting the title for the game window
@@ -94,17 +99,6 @@ class Background:
         screen.blit(self.background_img, (0, 0))
 
 
-class Energy_Bar:
-    """Class for the energy bar of each fighter"""
-
-    def __init__(self, name, hp):
-        self.name = name
-        self.hp = hp
-
-    def energy_display(self):
-        pass
-
-
 # fighter class
 class Fighter:
     def __init__(self, x, y, name, img_scale):
@@ -129,7 +123,7 @@ class Fighter:
         self.update_time = pygame.time.get_ticks()
         self.vel_y = 0
         self.special_power = Power_Shoot(self.x, self.y, self.shot_image, self.name, self.direction)
-        self.energy = Energy_Bar(self.name, self.hp)
+        self.health_bar = HealthBar(self.name, self.max_hp)
 
     def move(self, move_left, move_right):  # method for moving left and right
         """Method for character movement left, right"""
@@ -196,6 +190,7 @@ class Fighter:
             self.draw()
         if power_shot:
             self.special_power.shoot()
+            self.special_power.hp_substract()
 
         if pygame.time.get_ticks() - self.update_time > 600:
             self.update_time = pygame.time.get_ticks()
@@ -207,7 +202,7 @@ class Fighter:
             self.alive = False
 
 
-class Power_Shoot():
+class Power_Shoot:
     """Create special power object and shooting"""
     def __init__(self, x, y, shot_image, name, direction):
         self.shot_image = shot_image
@@ -233,11 +228,47 @@ class Power_Shoot():
         self.x += self.x_vel * self.direction
         screen.blit(pygame.transform.flip(self.shot_image, self.flip, False), (self.x, self.y))
 
+    def hp_substract(self):
+        if self.name == 'Ryu':
+            if abs(self.x - second_fighter.x) <= 10 and abs(self.y - second_fighter.y) < 80:
+                second_fighter.hp -= 15
+
+        else:
+            if abs(self.x - first_fighter.x) <= 10 and abs(self.y - first_fighter.y) < 80:
+                first_fighter.hp -= 15
+
+
+class HealthBar:
+    def __init__(self, char_name, max_hp):
+        self.char_name = char_name
+        if self.char_name == 'Guile':
+            self.x = 217
+            self.y = 65
+        else:
+            self.x = 795
+            self.y = 63
+        self.max_hp = max_hp
+        self.length = 195  # Độ dài energy bar
+        self.image = pygame.image.load(f"char_img/{self.char_name}/hp bar.png")
+        self.image = pygame.transform.scale(self.image, (self.image.get_width() * 0.7, self.image.get_height() * 0.7))
+
+    def draw(self, hp):
+        if self.char_name == 'Guile':
+            screen.blit(self.image, (200, 10))
+        else:
+            screen.blit(self.image, (700, 10))
+        if hp > self.max_hp * 0.5:
+            pygame.draw.rect(screen, GREEN, (self.x, self.y, int(hp * self.length/self.max_hp), 20))
+        elif hp > self.max_hp * 0.2:
+            pygame.draw.rect(screen, YELLOW, (self.x, self.y, int(hp * self.length/self.max_hp), 20))
+        else:
+            pygame.draw.rect(screen, RED, (self.x, self.y, int(hp * self.length/self.max_hp), 20))
+
 
 # game variables
 background_img = Background()
-first_fighter = Fighter(250, 250, 'Guile', 0.8)
-second_fighter = Fighter(950, 250, 'Ryu', 0.7)
+second_fighter = Fighter(250, 250, 'Guile', 0.8)
+first_fighter = Fighter(950, 250, 'Ryu', 0.7)
 move_left = False
 move_right = False
 power_count = 100
@@ -247,16 +278,17 @@ Game_Start()
 while run:  # the run loop
     clock.tick(fps)  # set up the same speed of display for any animation in the game
 
-
     # draw background
     background_img.update()
     background_img.draw()
 
     # draw fighters:
     first_fighter.draw()
+    first_fighter.health_bar.draw(first_fighter.hp)
     first_fighter.hp_check()
     # first_fighter.test()
     second_fighter.draw()
+    second_fighter.health_bar.draw(second_fighter.hp)
     second_fighter.hp_check()
 
     for event in pygame.event.get():
@@ -288,7 +320,6 @@ while run:  # the run loop
                 if power_count >= 0 and first_fighter.hp >= first_fighter.max_hp * 0.2:
                     power_shot = True
                     first_fighter.action = 'special_power'
-                    second_fighter.hp -= 30
 
         if event.type == pygame.KEYUP:  # check for key releases
             if event.key == pygame.K_b:  # key B released
@@ -300,10 +331,10 @@ while run:  # the run loop
     first_fighter.move(move_left, move_right)
     first_fighter.attack()
     first_fighter.jumping()
+
     if first_fighter.hp <= 0 or second_fighter.hp <= 0:
         Game_Over()
-    # print(second_fighter.hp)
-    print(first_fighter.special_power.x)
+    print(second_fighter.hp)
 
     pygame.display.update()  # to update all added images
 pygame.quit()
