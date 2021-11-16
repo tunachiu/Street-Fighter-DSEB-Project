@@ -1,6 +1,12 @@
 import pygame
 from pygame import mixer
 
+import sys
+
+from Button import *
+from config import *
+from InputBox import *
+
 pygame.init()  # call all the features in pygame package
 
 clock = pygame.time.Clock()
@@ -26,6 +32,116 @@ mixer.music.play(-1)
 jump_sound = mixer.Sound('sounds/jump.mp3')
 punch_sound = mixer.Sound('sounds/attack/punch.mp3')
 kick_sound = mixer.Sound('sounds/attack/kick.mp3')
+
+
+class GameIntro:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.clock = pygame.time.Clock()
+        self.instruct = False
+        self.start = False
+        self.play = False
+        self.running = True
+
+        self.player1 = ''
+        self.player2 = ''
+
+        self.font = pygame.font.Font('COPRGTB.TTF', 60)
+
+        self.intro_background = pygame.image.load("menu/bg.png")
+
+        self.instruct_background = pygame.image.load("menu/Instruction Screen.png")
+        self.get_name_background = pygame.image.load("menu/enter_name.png")
+
+    def check_to_quit(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+    def menu(self):
+        intro = True
+
+        play_button = Button(SCREEN_WIDTH/1.4, SCREEN_HEIGHT/4, 250, 70, WHITE, BROWN, 'PLAY', 30)
+        instruction_button = Button(SCREEN_WIDTH/1.4, SCREEN_HEIGHT/1.7, 250, 70, WHITE, BROWN, 'INSTRUCTIONS', 25)
+        while intro:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    intro = False
+                    self.running = False
+
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_pressed = pygame.mouse.get_pressed()
+
+            if play_button.is_pressed(mouse_pos, mouse_pressed):
+                intro = False
+                self.play = True
+                self.instruct = False
+            if instruction_button.is_pressed(mouse_pos, mouse_pressed):
+                intro = False
+                self.instruct = True
+                self.play = False
+
+            self.screen.blit(self.intro_background, (0,0))
+            self.screen.blit(play_button.image, play_button.rect)
+            self.screen.blit(instruction_button.image, instruction_button.rect)
+            self.clock.tick(FPS)
+            pygame.display.update()
+
+    def instruction(self):
+        play_button = Button(SCREEN_WIDTH/2.5, SCREEN_HEIGHT/1.25, 250, 70, WHITE, BROWN, 'PLAY', 30)
+        while self.instruct:
+            self.screen.blit(self.instruct_background, (0,0))
+            self.screen.blit(play_button.image, play_button.rect)
+
+            self.check_to_quit()
+
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_pressed = pygame.mouse.get_pressed()
+
+            if play_button.is_pressed(mouse_pos, mouse_pressed):
+                intro = False
+                self.play = True
+                self.instruct = False
+            self.clock.tick(FPS)
+            pygame.display.update()
+
+    def enter_name(self):
+        next_button = Button(SCREEN_WIDTH/2.3, SCREEN_HEIGHT/5, 200, 60, WHITE, BROWN, 'NEXT', 30)
+        while self.play:
+            #self.check_to_quit()
+
+            self.screen.blit(self.get_name_background, (0,0))
+            self.screen.blit(next_button.image, next_button.rect)
+
+            # Enter name
+            name_box_1 = InputBox(270, 80, 100, 40, font_size=32)
+            name_box_2 = InputBox(890, 80, 100, 40, font_size=32)
+            names = [name_box_1, name_box_2]
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                for name in names:
+                    name.handle_event(event)
+            for name in names:
+                name.draw(self.screen)
+            self.player1 = name_box_1.name
+            self.player2 = name_box_2.name
+
+            # Start
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_pressed = pygame.mouse.get_pressed()
+
+            if next_button.is_pressed(mouse_pos, mouse_pressed):
+                self.start = True
+                self.play = False
+                self.instruct = False
+
+            self.clock.tick(FPS)
+            pygame.display.update()
 
 
 # load images
@@ -123,7 +239,7 @@ class Fighter:
         self.update_time = pygame.time.get_ticks()
         self.vel_y = 0
         self.special_power = Power_Shoot(self.x, self.y, self.shot_image, self.name, self.direction)
-        self.health_bar = HealthBar(self.name, self.max_hp)
+        #self.health_bar = HealthBar(self.name, self.max_hp)
 
     def move(self, move_left, move_right):  # method for moving left and right
         """Method for character movement left, right"""
@@ -237,7 +353,7 @@ class Power_Shoot:
             if abs(self.x - first_fighter.x) <= 10 and abs(self.y - first_fighter.y) < 80:
                 first_fighter.hp -= 15
 
-
+'''
 class HealthBar:
     def __init__(self, char_name, max_hp):
         self.char_name = char_name
@@ -249,7 +365,7 @@ class HealthBar:
             self.y = 63
         self.max_hp = max_hp
         self.length = 195  # Độ dài energy bar
-        self.image = pygame.image.load(f"char_img/{self.char_name}/hp bar.png")
+        #self.image = pygame.image.load(f"char_img/{self.char_name}/hp bar.png")
         self.image = pygame.transform.scale(self.image, (self.image.get_width() * 0.7, self.image.get_height() * 0.7))
 
     def draw(self, hp):
@@ -263,7 +379,7 @@ class HealthBar:
             pygame.draw.rect(screen, YELLOW, (self.x, self.y, int(hp * self.length/self.max_hp), 20))
         else:
             pygame.draw.rect(screen, RED, (self.x, self.y, int(hp * self.length/self.max_hp), 20))
-
+'''
 
 # game variables
 background_img = Background()
@@ -274,7 +390,16 @@ move_right = False
 power_count = 100
 run = True
 power_shot = False
-Game_Start()
+
+g = GameIntro()
+g.menu()
+
+g.instruction()
+g.enter_name()
+first_fighter_name = g.player1
+second_fighter_name = g.player2
+
+#Game_Start()
 while run:  # the run loop
     clock.tick(fps)  # set up the same speed of display for any animation in the game
 
@@ -284,11 +409,11 @@ while run:  # the run loop
 
     # draw fighters:
     first_fighter.draw()
-    first_fighter.health_bar.draw(first_fighter.hp)
+    #first_fighter.health_bar.draw(first_fighter.hp)
     first_fighter.hp_check()
     # first_fighter.test()
     second_fighter.draw()
-    second_fighter.health_bar.draw(second_fighter.hp)
+    #second_fighter.health_bar.draw(second_fighter.hp)
     second_fighter.hp_check()
 
     for event in pygame.event.get():
