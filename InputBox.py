@@ -29,12 +29,13 @@ class InputBox:
             if self.active:
                 if event.key == pygame.K_RETURN:
                     self.name = self.text
-                    print(self.name)
-                    #self.text = ''
+                    #print(self.name)
+
                 elif event.key == pygame.K_BACKSPACE:
                     self.text = self.text[:-1]
                 else:
-                    self.text += event.unicode
+                    if len(self.text) < 6:
+                        self.text += event.unicode
                 # Re-render the text.
                 self.txt_surface = self.font.render(self.text, True, self.color)
 

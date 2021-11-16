@@ -215,8 +215,9 @@ class Background:
 
 # fighter class
 class Fighter:
-    def __init__(self, x, y, name, img_scale):
+    def __init__(self, x, y, name, img_scale, name_displayed):
         self.name = name
+        self.name_displayed = name_displayed
         self.max_hp = 200
         self.hp = 200
         self.alive = True
@@ -237,7 +238,7 @@ class Fighter:
         self.update_time = pygame.time.get_ticks()
         self.vel_y = 0
         self.special_power = Power_Shoot(self.x, self.y, self.shot_image, self.name, self.direction)
-        self.health_bar = HealthBar(self.name, self.max_hp)
+        self.health_bar = HealthBar(self.name, self.max_hp, self.name_displayed)
 
     def move(self, move_left, move_right):  # method for moving left and right
         """Method for character movement left, right"""
@@ -353,8 +354,9 @@ class Power_Shoot:
 
 
 class HealthBar:
-    def __init__(self, char_name, max_hp):
+    def __init__(self, char_name, max_hp, name_displayed):
         self.char_name = char_name
+        self.name_display = name_displayed
         if self.char_name == 'Guile':
             self.x = 217
             self.y = 65
@@ -367,10 +369,15 @@ class HealthBar:
         self.image = pygame.transform.scale(self.image, (self.image.get_width() * 0.7, self.image.get_height() * 0.7))
 
     def draw(self, hp):
+        font = pygame.font.Font('COPRGTB.TTF', 32)
+        txt_surface = font.render(self.name_display, True, YELLOW)
         if self.char_name == 'Guile':
             screen.blit(self.image, (200, 10))
+            screen.blit(txt_surface, (300, 6))
         else:
             screen.blit(self.image, (700, 10))
+            screen.blit(txt_surface, (800, 6))
+
         if hp > self.max_hp * 0.5:
             pygame.draw.rect(screen, GREEN, (self.x, self.y, int(hp * self.length/self.max_hp), 20))
         elif hp > self.max_hp * 0.2:
@@ -379,10 +386,10 @@ class HealthBar:
             pygame.draw.rect(screen, RED, (self.x, self.y, int(hp * self.length/self.max_hp), 20))
 
 
+
 # game variables
 background_img = Background()
-second_fighter = Fighter(250, 250, 'Guile', 0.8)
-first_fighter = Fighter(950, 250, 'Ryu', 0.7)
+
 move_left = False
 move_right = False
 power_count = 100
@@ -394,8 +401,11 @@ g.menu()
 
 g.instruction()
 g.enter_name()
-first_fighter_name = g.player1
-second_fighter_name = g.player2
+first_fighter_name = g.player2
+second_fighter_name = g.player1
+
+second_fighter = Fighter(250, 250, 'Guile', 0.8, second_fighter_name)
+first_fighter = Fighter(950, 250, 'Ryu', 0.7, first_fighter_name)
 
 #Game_Start()
 while run:  # the run loop
