@@ -50,9 +50,12 @@ class GameIntro:
         self.font = pygame.font.Font('COPRGTB.TTF', 60)
 
         self.intro_background = pygame.image.load("menu/bg.png")
-
-        self.instruct_background = pygame.image.load("menu/Instruction Screen.png")
+        self.instruct_background = pygame.image.load("menu/instruction.png")
         self.get_name_background = pygame.image.load("menu/enter_name.png")
+
+        self.name_box_1 = InputBox(270, 80, 150, 40, font_size=32)
+        self.name_box_2 = InputBox(890, 80, 150, 40, font_size=32)
+        self.names = [self.name_box_1, self.name_box_2]
 
     def check_to_quit(self):
         for event in pygame.event.get():
@@ -113,20 +116,18 @@ class GameIntro:
             self.screen.blit(next_button.image, next_button.rect)
 
             # Enter name
-            name_box_1 = InputBox(270, 80, 100, 40, font_size=32)
-            name_box_2 = InputBox(890, 80, 100, 40, font_size=32)
-            names = [name_box_1, name_box_2]
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
 
-                for name in names:
+                for name in self.names:
                     name.handle_event(event)
-            for name in names:
+            for name in self.names:
                 name.draw(self.screen)
-            self.player1 = name_box_1.name
-            self.player2 = name_box_2.name
+            self.player1 = self.name_box_1.name
+            self.player2 = self.name_box_2.name
 
             # Start
             mouse_pos = pygame.mouse.get_pos()
@@ -236,7 +237,7 @@ class Fighter:
         self.update_time = pygame.time.get_ticks()
         self.vel_y = 0
         self.special_power = Power_Shoot(self.x, self.y, self.shot_image, self.name, self.direction)
-        #self.health_bar = HealthBar(self.name, self.max_hp)
+        self.health_bar = HealthBar(self.name, self.max_hp)
 
     def move(self, move_left, move_right):  # method for moving left and right
         """Method for character movement left, right"""
@@ -350,7 +351,7 @@ class Power_Shoot:
             if abs(self.x - first_fighter.x) <= 10 and abs(self.y - first_fighter.y) < 80:
                 first_fighter.hp -= 15
 
-'''
+
 class HealthBar:
     def __init__(self, char_name, max_hp):
         self.char_name = char_name
@@ -362,7 +363,7 @@ class HealthBar:
             self.y = 63
         self.max_hp = max_hp
         self.length = 195  # Độ dài energy bar
-        #self.image = pygame.image.load(f"char_img/{self.char_name}/hp bar.png")
+        self.image = pygame.image.load(f"char_img/{self.char_name}/hp bar.png")
         self.image = pygame.transform.scale(self.image, (self.image.get_width() * 0.7, self.image.get_height() * 0.7))
 
     def draw(self, hp):
@@ -376,7 +377,7 @@ class HealthBar:
             pygame.draw.rect(screen, YELLOW, (self.x, self.y, int(hp * self.length/self.max_hp), 20))
         else:
             pygame.draw.rect(screen, RED, (self.x, self.y, int(hp * self.length/self.max_hp), 20))
-'''
+
 
 # game variables
 background_img = Background()
@@ -406,11 +407,11 @@ while run:  # the run loop
 
     # draw fighters:
     first_fighter.draw()
-    #first_fighter.health_bar.draw(first_fighter.hp)
+    first_fighter.health_bar.draw(first_fighter.hp)
     first_fighter.hp_check()
     # first_fighter.test()
     second_fighter.draw()
-    #second_fighter.health_bar.draw(second_fighter.hp)
+    second_fighter.health_bar.draw(second_fighter.hp)
     second_fighter.hp_check()
 
     for event in pygame.event.get():

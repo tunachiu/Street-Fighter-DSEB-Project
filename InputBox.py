@@ -1,20 +1,5 @@
 import pygame.font
 from config import *
-'''
-class InputBox:
-    def __init__(self):
-        self.text = ''
-        self.font = pygame.font.Font('BERNHC.TTF', 32)
-    def get_text(self):
-        for event in pygame.event.get():
-            if event.type == KEYDOWN:
-                if len(self.text) < 6:
-                    self.text += event.unicode
-
-        text_surface = self.font.render(self.text, True, YELLOW)
-        screen.blit(text_surface,)
-'''
-
 
 
 class InputBox:
