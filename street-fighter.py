@@ -66,10 +66,7 @@ class GameIntro:
         play_button = Button(SCREEN_WIDTH/1.4, SCREEN_HEIGHT/4, 250, 70, WHITE, BROWN, 'PLAY', 30)
         instruction_button = Button(SCREEN_WIDTH/1.4, SCREEN_HEIGHT/1.7, 250, 70, WHITE, BROWN, 'INSTRUCTIONS', 25)
         while intro:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    intro = False
-                    self.running = False
+            self.check_to_quit()
 
             mouse_pos = pygame.mouse.get_pos()
             mouse_pressed = pygame.mouse.get_pressed()
