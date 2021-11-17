@@ -10,10 +10,10 @@ fps = 60
 screen_width = 1200
 screen_height = 450
 RED = (255, 0, 0)
-BLUE = (0, 0, 255)
-BROWN = (210,105,30)
-GREEN = (154,205,50)
-YELLOW = (255,215,0)
+WHITE = (255, 255, 255)
+BROWN = (210, 105, 30)
+GREEN = (154, 205, 50)
+YELLOW = (255, 215, 0)
 
 screen = pygame.display.set_mode((screen_width, screen_height))  # set the size the the game window
 pygame.display.set_caption('Street Fighter')  # setting the title for the game window
@@ -31,11 +31,15 @@ kick_sound = mixer.Sound('sounds/attack/kick.mp3')
 # load images
 # background image
 
+def text_display(text, font, color, x, y):
+    text_img = font.render(text, True, color)
+    screen.blit(text_img, (x, y))
+
+
 def Game_Start():
     update_time = pygame.time.get_ticks()
     countdown_list = []
     img_index = -1
-    sound_index = 0
     for i in range(1, 6):
         img = pygame.image.load(f'start/{i}.png')
         countdown_list.append(img)
@@ -43,11 +47,14 @@ def Game_Start():
     running = True
     bg = pygame.image.load(f'background/0.gif')
     scale = screen_width / bg.get_width()
-    print(scale)
     bg = pygame.transform.scale(bg, (bg.get_width() * scale, bg.get_height() * scale))
 
     while running:
         try:
+            for event in pygame.event.get():
+                """Exit game input"""
+                if event.type == pygame.QUIT:
+                    running = False
             screen.blit(bg, (0, 0))
             cooldown = 300
             if pygame.time.get_ticks() - update_time > cooldown:
@@ -65,8 +72,22 @@ def Game_Start():
         pygame.display.update()
 
 
-def Game_Over():
-    pass
+def Game_Over(result):
+    k = 0
+    mixer.music.stop()
+    running = True
+    sound = mixer.Sound(f"sounds/game over/{result}.mp3")
+    starting_time = pygame.time.get_ticks()
+    sound.play()
+    while running:
+        for event in pygame.event.get():
+            """Exit game input"""
+            if event.type == pygame.QUIT:
+                running = False
+        if k == 1:
+            running = False
+        if pygame.time.get_ticks() - starting_time > 2000:
+            k += 1
 
 
 class Background:
@@ -103,8 +124,8 @@ class Background:
 class Fighter:
     def __init__(self, x, y, name, img_scale):
         self.name = name
-        self.max_hp = 200
-        self.hp = 200
+        self.max_hp = 300
+        self.hp = 300
         self.alive = True
         self.action = 'idle'
         self.scale = img_scale  # scale to adjust the size of the character image
@@ -125,23 +146,23 @@ class Fighter:
         self.special_power = Power_Shoot(self.x, self.y, self.shot_image, self.name, self.direction)
         self.health_bar = HealthBar(self.name, self.max_hp)
 
-    def move(self, move_left, move_right):  # method for moving left and right
+    def move(self, left, right):  # method for moving left and right
         """Method for character movement left, right"""
         if self.name == 'Guile':
-            if move_left and self.x >= 0:  # check move and set boundary so the image won't move outside the screen
+            if left and self.x >= 0:  # check move and set boundary so the image won't move outside the screen
                 self.x -= self.speed
                 self.flip = True
                 self.direction = -1
-            if move_right and self.x <= screen_width - self.image.get_width() - self.speed:
+            if right and self.x <= screen_width - self.image.get_width() - self.speed:
                 self.x += self.speed
                 self.flip = False
                 self.direction = 1
         if self.name == 'Ryu':
-            if move_left and self.x >= 0:  # check move and set boundary so the image won't move outside the screen
+            if left and self.x >= 0:  # check move and set boundary so the image won't move outside the screen
                 self.x -= self.speed
                 self.flip = False
                 self.direction = -1
-            if move_right and self.x <= screen_width - self.image.get_width() - self.speed:
+            if right and self.x <= screen_width - self.image.get_width() - self.speed:
                 self.x += self.speed
                 self.flip = True
                 self.direction = 1
@@ -150,7 +171,7 @@ class Fighter:
         """Method for jump"""
         jump_step = 0
         GRAVITY = 0.3
-        if first_fighter.jump and self.in_air == False:
+        if first_fighter.jump and self.in_air is False:
             self.action = 'jump'
             self.draw()
             jump_sound.play()
@@ -178,7 +199,7 @@ class Fighter:
         self.image = pygame.transform.scale(img, (img.get_width() * self.scale, img.get_height() * self.scale))
         screen.blit(pygame.transform.flip(self.image, self.flip, False), (self.x, self.y))
 
-    def attack(self):
+    def attack(self, power_shot):
         if self.action == 'punch':
             punch_sound.play()
             self.draw()
@@ -190,15 +211,15 @@ class Fighter:
             self.draw()
         if power_shot:
             self.special_power.shoot()
-            self.special_power.hp_substract()
+            self.special_power.hp_subtract()
 
         if pygame.time.get_ticks() - self.update_time > 600:
             self.update_time = pygame.time.get_ticks()
             self.action = 'idle'
             self.draw()
 
-    def hp_check(self):
-        if self.hp == 0:
+    def alive_check(self):
+        if self.hp <= 0:
             self.alive = False
 
 
@@ -210,7 +231,7 @@ class Power_Shoot:
         self.sound = self.special_sound = mixer.Sound(f'sounds/attack/power {self.name}.mp3')
         self.x = x
         self.y = y
-        self.x_vel = 20
+        self.x_vel = 10
         self.direction = direction
         self.flip = False
 
@@ -228,14 +249,9 @@ class Power_Shoot:
         self.x += self.x_vel * self.direction
         screen.blit(pygame.transform.flip(self.shot_image, self.flip, False), (self.x, self.y))
 
-    def hp_substract(self):
-        if self.name == 'Ryu':
-            if abs(self.x - second_fighter.x) <= 10 and abs(self.y - second_fighter.y) < 80:
-                second_fighter.hp -= 15
-
-        else:
-            if abs(self.x - first_fighter.x) <= 10 and abs(self.y - first_fighter.y) < 80:
-                first_fighter.hp -= 15
+    def hp_subtract(self):
+        if abs(self.x - second_fighter.x) == 0 and abs(self.y - second_fighter.y) < 80:
+            second_fighter.hp -= 30
 
 
 class HealthBar:
@@ -267,29 +283,51 @@ class HealthBar:
 
 # game variables
 background_img = Background()
-second_fighter = Fighter(250, 250, 'Guile', 0.8)
-first_fighter = Fighter(950, 250, 'Ryu', 0.7)
+first_fighter = Fighter(250, 250, 'Guile', 0.8)
+second_fighter = Fighter(950, 250, 'Ryu', 0.7)
 move_left = False
 move_right = False
-power_count = 100
+power_count = 3
 run = True
+game_result = 'lose'
+countdown_font = pygame.font.SysFont('consolas', 40)
+countdown = 60
+start_time = pygame.time.get_ticks()
 power_shot = False
+k_o = pygame.image.load('k.o.png')
+k_o = pygame.transform.scale(k_o, (k_o.get_width() * 0.5, k_o.get_height() * 0.5))
+
+
 Game_Start()
 while run:  # the run loop
     clock.tick(fps)  # set up the same speed of display for any animation in the game
-
     # draw background
     background_img.update()
     background_img.draw()
+    screen.blit(k_o, (548, 20))
+
+    # Countdown in game
+    if countdown <= 9:
+        text_display(f"00:0{str(countdown)}", countdown_font, WHITE, 548, 80)
+        count_timer = pygame.time.get_ticks()
+        if count_timer - start_time > 800:
+            countdown -= 1
+            start_time = count_timer
+    else:
+        text_display(f"00:{str(countdown)}", countdown_font, WHITE, 548, 80)
+        count_timer = pygame.time.get_ticks()
+        if count_timer - start_time > 800:
+            countdown -= 1
+            start_time = count_timer
 
     # draw fighters:
     first_fighter.draw()
     first_fighter.health_bar.draw(first_fighter.hp)
-    first_fighter.hp_check()
+    first_fighter.alive_check()
     # first_fighter.test()
     second_fighter.draw()
     second_fighter.health_bar.draw(second_fighter.hp)
-    second_fighter.hp_check()
+    second_fighter.alive_check()
 
     for event in pygame.event.get():
         """Exit game input"""
@@ -320,6 +358,8 @@ while run:  # the run loop
                 if power_count >= 0 and first_fighter.hp >= first_fighter.max_hp * 0.2:
                     power_shot = True
                     first_fighter.action = 'special_power'
+                if power_count < 0 or first_fighter.hp <= first_fighter.max_hp * 0.2:
+                    power_shot = False
 
         if event.type == pygame.KEYUP:  # check for key releases
             if event.key == pygame.K_b:  # key B released
@@ -329,12 +369,17 @@ while run:  # the run loop
 
     # if first_fighter.alive:
     first_fighter.move(move_left, move_right)
-    first_fighter.attack()
+    first_fighter.attack(power_shot)
     first_fighter.jumping()
 
-    if first_fighter.hp <= 0 or second_fighter.hp <= 0:
-        Game_Over()
-    print(second_fighter.hp)
-
+    if not first_fighter.alive or not second_fighter.alive:
+        if not second_fighter.alive:
+            game_result = 'win'
+        if not first_fighter.alive:
+            game_result = 'lose'
+        img = pygame.image.load(f'game over/{game_result}.png')
+        screen.blit(img, (500, 200))
+        run = False
     pygame.display.update()  # to update all added images
+Game_Over(game_result)
 pygame.quit()
